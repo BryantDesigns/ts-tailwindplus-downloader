@@ -6,18 +6,17 @@
         "node": "^20.19.0 || ^22.12.0 || >=23"
     },
     "description": "A downloader for TailwindPlus components with diff comparison tools",
-    "author": "BryantDesigns",
+    "author": "Tyler Bryant",
     "license": "MIT",
     "files": [
-        "tailwindplus-downloader.js",
-        "tailwindplus-diff.js",
+        "dist/",
         "scripts/create-skeleton.sh"
     ],
     "bin": {
-        "tailwindplus-downloader": "tailwindplus-downloader.js",
-        "tailwindplus-diff": "tailwindplus-diff.js",
-        "twp-downloader": "tailwindplus-downloader.js",
-        "twp-diff": "tailwindplus-diff.js",
+        "tailwindplus-downloader": "dist/index.js",
+        "tailwindplus-diff": "dist/diff/tailwindplus-diff.js",
+        "twp-downloader": "dist/index.js",
+        "twp-diff": "dist/diff/tailwindplus-diff.js",
         "twp-create-skeleton": "scripts/create-skeleton.sh"
     },
     "dependencies": {
@@ -27,14 +26,19 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@types/node": "^22.0.0",
+        "@types/yargs": "^17.0.0",
         "eslint": "^10.0.2",
-        "globals": "^17.3.0"
+        "globals": "^17.3.0",
+        "typescript": "^5.7.0"
     },
     "scripts": {
+        "build": "tsc",
+        "build:watch": "tsc --watch",
         "postinstall": "npx playwright install --with-deps chromium",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "lint": "eslint --config eslint.config.cjs \"**/*.js\"",
-        "lint:fix": "eslint --config eslint.config.cjs \"**/*.js\" --fix",
+        "lint": "eslint --config eslint.config.cjs \"src/**/*.ts\"",
+        "lint:fix": "eslint --config eslint.config.cjs \"src/**/*.ts\" --fix",
         "create-skeleton": "bash scripts/create-skeleton.sh",
         "smoke-test": "bash test/smoke-test.sh"
     }
