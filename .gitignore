@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# TailwindPlus runtime files
+tailwindplus-components-*.json
+tailwindplus-components-*.log
+tailwindplus-skeleton.json
+diffs/
+
+# Credentials & session
+credentials.json
+.tailwindplus-downloader-credentials.json
+.tailwindplus-downloader-session.json
+
+# Test output
+test/smoke-test-run/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
