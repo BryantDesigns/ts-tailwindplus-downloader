@@ -67,9 +67,10 @@ export async function saveSession(
 
 /**
  * Validates whether the given page is already in an authenticated state by
- * navigating to the protected Plus URL and checking the resulting URL.
+ * navigating to the Plus URL and checking page elements.
  *
- * If the site redirects to the login page, the session is invalid.
+ * Checks for the absence of a "Sign in" link and presence of an "Account"
+ * button, which is far more reliable than URL-based redirect detection.
  */
 export async function validateSession(
   page: Page,
@@ -79,21 +80,18 @@ export async function validateSession(
   logger.debug('Validating session...');
 
   try {
-    const response = await page.goto(config.urls.plus, { waitUntil: 'domcontentloaded' });
+    await page.goto(config.urls.plus, { waitUntil: 'domcontentloaded' });
 
-    if (!response) {
-      logger.debug('No response from validation page');
-      return false;
-    }
+    const signInLink = page.getByRole('link', { name: 'Sign in' });
+    const accountButton = page.getByRole('button', { name: 'Account' });
 
-    // If redirected to login, the session has expired
-    if (page.url().includes('/login')) {
-      logger.debug('Session invalid: redirected to login');
-      return false;
-    }
+    const isSignInAbsent = !(await signInLink.isVisible());
+    const isAccountPresent = await accountButton.isVisible();
 
-    logger.debug('Session is valid');
-    return true;
+    const isAuthenticated = isSignInAbsent && isAccountPresent;
+    logger.debug(`Session validation: ${isAuthenticated ? 'valid' : 'invalid'}`);
+
+    return isAuthenticated;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logger.debug(`Session validation error: ${msg}`);
