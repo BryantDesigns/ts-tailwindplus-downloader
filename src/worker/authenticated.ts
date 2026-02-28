@@ -89,6 +89,10 @@ export async function extractAuthenticatedPageData(
         throw error;
     }
 
+    if (!subcategory) {
+        throw new DownloaderError(`Received no data from ${url} for format "${expectedFormat}"`);
+    }
+
     // At this point data is guaranteed to be available and in the correct format
     const { components, name: subcategoryName, category } = subcategory;
     const categoryName = category.name;
@@ -105,7 +109,7 @@ export async function extractAuthenticatedPageData(
     for (const component of components) {
         componentData[productName]![categoryName]![subcategoryName]![component.name] = {
             name: component.name,
-            snippets: [shapeSnippet(component.snippet as Record<string, unknown>)],
+            snippets: [shapeSnippet(component.snippet as unknown as Record<string, unknown>)],
         };
     }
 

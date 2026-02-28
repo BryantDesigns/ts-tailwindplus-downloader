@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * Unauthenticated page data extraction.
  *

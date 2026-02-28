@@ -197,9 +197,6 @@ export class TailwindPlusDownloader {
         }
 
         this.urlCount = urls.length;
-
-        // Store URLs on config for worker access (workers read from this)
-        (this.config as Record<string, unknown>)['_urls'] = urls;
         this._urls = urls;
     }
 

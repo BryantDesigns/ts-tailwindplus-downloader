@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * Format manager — detects, generates, and switches the active component format.
  *

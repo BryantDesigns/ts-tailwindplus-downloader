@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * Browser-evaluate functions for extracting page data from TailwindPlus pages.
  *
