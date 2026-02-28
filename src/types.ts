@@ -32,6 +32,7 @@ export interface DownloaderConfig {
         readonly versionSelect: string;
     };
     readonly timeout: number;
+    readonly loginTimeout: number;
     readonly retries: {
         readonly maxRetries: number;
     };

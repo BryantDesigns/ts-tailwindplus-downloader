@@ -24,8 +24,11 @@ import type { Logger } from '../logger.js';
 /**
  * Discovers all component page URLs from the TailwindPlus ui-blocks listing.
  *
- * Navigates to the discovery URL and extracts all subcategory links. A retry
- * loop handles transient navigation failures (network blips, page timeouts).
+ * Navigates to the discovery URL and extracts the `props.products` array from
+ * the `data-page` JSON attribute, then flattens
+ * `products[].categories[].subcategories[].url` into a URL list.
+ *
+ * A retry loop handles transient navigation failures (network blips, page timeouts).
  *
  * @param page     Playwright page to use for navigation
  * @param config   App config (URLs, selectors, timeouts)
@@ -45,25 +48,57 @@ export async function discoverUrls(
     try {
       await page.goto(config.urls.discovery, { waitUntil: 'domcontentloaded' });
 
-      // Wait for navigation links to render
-      await page.waitForFunction(() => {
-        const app = document.querySelector('div#app');
-        return app?.getAttribute('data-page') !== null;
-      }, { timeout: config.timeout });
+      // Wait for the product data to be present in the data-page attribute.
+      // The page embeds an InertiaJS JSON payload with the full product tree
+      // under props.products — we wait for that array to be non-empty.
+      const productsHandle = await page.waitForFunction(() => {
+        try {
+          const app = document.querySelector('div#app');
+          if (!app) return false;
 
-      const urls = await page.evaluate((baseUrl: string) => {
-        const data = document.querySelector('div#app')?.getAttribute('data-page');
-        if (!data) return [];
+          const json = app.getAttribute('data-page');
+          if (!json) return false;
 
-        const parsed = JSON.parse(data) as {
-                    props?: { categories?: Array<{ subcategories?: Array<{ url?: string }> }> };
-                };
+          const pageData = JSON.parse(json);
+          const products = pageData?.props?.products;
 
-        return (parsed.props?.categories ?? []).flatMap(
-          cat => (cat.subcategories ?? []).map(sub => sub.url).filter((u): u is string => !!u)
-        ).map(relativeUrl => `${baseUrl}${relativeUrl}`);
-      }, config.urls.base);
+          if (!Array.isArray(products) || products.length === 0) return false;
+          return products;
+        } catch {
+          return false;
+        }
+      }, undefined, { timeout: config.timeout });
 
+      // Extract the products array from the JSHandle
+      type SubcategoryEntry = { name?: string; url?: string; components?: string };
+      type CategoryEntry = { subcategories?: SubcategoryEntry[] };
+      type ProductEntry = { categories?: CategoryEntry[] };
+
+      const products: ProductEntry[] = await productsHandle.evaluate(
+        (data) => data as ProductEntry[]
+      );
+
+      // Flatten products → categories → subcategories
+      const subcategories = products.flatMap(
+        p => (p.categories ?? []).flatMap(c => c.subcategories ?? [])
+      );
+
+      const urls: string[] = [];
+      let totalComponentCount = 0;
+
+      for (const sub of subcategories) {
+        if (!sub?.name || !sub.url || !sub.components) continue;
+
+        const match = sub.components.match(/^(?<componentCount>\d+)/);
+        const count = parseInt(match?.groups?.componentCount ?? '0', 10) || 0;
+
+        urls.push(sub.url);
+        totalComponentCount += count;
+      }
+
+      logger.debug(
+        `Discovered ${urls.length} component URLs with ${totalComponentCount} individual components`
+      );
       logger.info(`Discovered ${urls.length} component pages`);
       return urls;
     } catch (error) {

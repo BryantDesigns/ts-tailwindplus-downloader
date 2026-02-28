@@ -80,7 +80,11 @@ export class Logger {
 
     if (this.logStream) {
       this.logStream.write(`[${paddedLevel}] ${message}\n`);
-    } else {
+    }
+
+    // Always write INFO+ to console so the user sees progress even when --log is set.
+    // DEBUG messages are file-only (too verbose for the terminal).
+    if (!this.logStream || level >= LogLevel.INFO) {
       const consoleMessage = `[${paddedLevel}] ${message}`;
       if (stream === 'stderr') {
         console.error(consoleMessage);

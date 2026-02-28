@@ -67,6 +67,7 @@ export function createConfig(): DownloaderConfig {
 
     // Lower than Playwright's default to detect stalls sooner.
     timeout: 10_000,
+    loginTimeout: 15_000,
 
     retries: {
       maxRetries: 3,
