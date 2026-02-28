@@ -27,16 +27,16 @@ export interface TracingStartOptions {
  * @param options   Optional tracing options.
  */
 export async function startTracing(
-    context: BrowserContext,
-    label: string,
-    options?: TracingStartOptions
+  context: BrowserContext,
+  label: string,
+  options?: TracingStartOptions
 ): Promise<void> {
-    await context.tracing.start({
-        snapshots: true,
-        screenshots: true,
-        sources: true,
-        title: options?.title ?? label,
-    });
+  await context.tracing.start({
+    snapshots: true,
+    screenshots: true,
+    sources: true,
+    title: options?.title ?? label,
+  });
 }
 
 /**
@@ -50,15 +50,15 @@ export async function startTracing(
  * @param label     Short identifier used for the output filename.
  */
 export async function stopTracing(
-    context: BrowserContext,
-    tracesDir: string,
-    label: string
+  context: BrowserContext,
+  tracesDir: string,
+  label: string
 ): Promise<void> {
-    try {
-        const traceFile = path.join(tracesDir, `${label}.zip`);
-        await context.tracing.stop({ path: traceFile });
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`[WARN] Failed to save trace for "${label}": ${message}`);
-    }
+  try {
+    const traceFile = path.join(tracesDir, `${label}.zip`);
+    await context.tracing.stop({ path: traceFile });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[WARN] Failed to save trace for "${label}": ${message}`);
+  }
 }

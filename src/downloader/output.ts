@@ -28,30 +28,30 @@ import type { Logger } from '../logger.js';
  * rather than replaced, accumulating results across multiple format downloads.
  */
 export function mergeComponentData(
-    target: Record<string, unknown>,
-    source: Record<string, unknown>
+  target: Record<string, unknown>,
+  source: Record<string, unknown>
 ): void {
-    for (const [key, value] of Object.entries(source)) {
-        if (!value || typeof value !== 'object') continue;
+  for (const [key, value] of Object.entries(source)) {
+    if (!value || typeof value !== 'object') continue;
 
-        const obj = value as Record<string, unknown>;
+    const obj = value as Record<string, unknown>;
 
-        if (Array.isArray(obj['snippets'])) {
-            // This is a component entry — merge its snippets
-            const targetEntry = target[key] as ComponentEntry | undefined;
-            if (!targetEntry) {
-                target[key] = { name: obj['name'], snippets: [...(obj['snippets'] as Snippet[])] };
-            } else {
-                targetEntry.snippets = targetEntry.snippets.concat(obj['snippets'] as Snippet[]);
-            }
-        } else {
-            // This is a container (product/category/subcategory) — recurse
-            if (!target[key] || typeof target[key] !== 'object') {
-                target[key] = {};
-            }
-            mergeComponentData(target[key] as Record<string, unknown>, obj);
-        }
+    if (Array.isArray(obj['snippets'])) {
+      // This is a component entry — merge its snippets
+      const targetEntry = target[key] as ComponentEntry | undefined;
+      if (!targetEntry) {
+        target[key] = { name: obj['name'], snippets: [...(obj['snippets'] as Snippet[])] };
+      } else {
+        targetEntry.snippets = targetEntry.snippets.concat(obj['snippets'] as Snippet[]);
+      }
+    } else {
+      // This is a container (product/category/subcategory) — recurse
+      if (!target[key] || typeof target[key] !== 'object') {
+        target[key] = {};
+      }
+      mergeComponentData(target[key] as Record<string, unknown>, obj);
     }
+  }
 }
 
 /**
@@ -59,17 +59,17 @@ export function mergeComponentData(
  * within the full component data tree.
  */
 export function countComponents(data: Record<string, unknown>): number {
-    let count = 0;
-    for (const value of Object.values(data)) {
-        if (!value || typeof value !== 'object') continue;
-        const obj = value as Record<string, unknown>;
-        if (Array.isArray(obj['snippets'])) {
-            count++;
-        } else {
-            count += countComponents(obj);
-        }
+  let count = 0;
+  for (const value of Object.values(data)) {
+    if (!value || typeof value !== 'object') continue;
+    const obj = value as Record<string, unknown>;
+    if (Array.isArray(obj['snippets'])) {
+      count++;
+    } else {
+      count += countComponents(obj);
     }
-    return count;
+  }
+  return count;
 }
 
 /**
@@ -78,30 +78,30 @@ export function countComponents(data: Record<string, unknown>): number {
  * different format passes.
  */
 export function deduplicateEcommerceSnippets(data: ComponentData): ComponentData {
-    const cloned = structuredClone(data) as Record<string, unknown>;
+  const cloned = structuredClone(data) as Record<string, unknown>;
 
-    function deduplicate(obj: Record<string, unknown>): void {
-        const snippets = obj['snippets'];
-        if (Array.isArray(snippets)) {
-            const seen = new Map<string, Snippet>();
-            for (const snippet of snippets as Snippet[]) {
-                const key = `${snippet.name}|${snippet.version}|${snippet.supportsDarkMode}`;
-                if (!seen.has(key)) {
-                    seen.set(key, snippet);
-                }
-            }
-            obj['snippets'] = Array.from(seen.values());
-        } else {
-            for (const value of Object.values(obj)) {
-                if (value && typeof value === 'object' && !Array.isArray(value)) {
-                    deduplicate(value as Record<string, unknown>);
-                }
-            }
+  function deduplicate(obj: Record<string, unknown>): void {
+    const snippets = obj['snippets'];
+    if (Array.isArray(snippets)) {
+      const seen = new Map<string, Snippet>();
+      for (const snippet of snippets as Snippet[]) {
+        const key = `${snippet.name}|${snippet.version}|${snippet.supportsDarkMode}`;
+        if (!seen.has(key)) {
+          seen.set(key, snippet);
         }
+      }
+      obj['snippets'] = Array.from(seen.values());
+    } else {
+      for (const value of Object.values(obj)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          deduplicate(value as Record<string, unknown>);
+        }
+      }
     }
+  }
 
-    deduplicate(cloned);
-    return cloned as ComponentData;
+  deduplicate(cloned);
+  return cloned as ComponentData;
 }
 
 // =============================================================================
@@ -112,24 +112,24 @@ export function deduplicateEcommerceSnippets(data: ComponentData): ComponentData
  * Writes all component data and metadata to a single JSON file.
  */
 export function writeJsonOutput(
-    outputFile: string,
-    componentData: ComponentData,
-    metadata: DownloadMetadata,
-    logger: Logger
+  outputFile: string,
+  componentData: ComponentData,
+  metadata: DownloadMetadata,
+  logger: Logger
 ): void {
-    logger.debug(`Writing JSON output to ${outputFile}`);
+  logger.debug(`Writing JSON output to ${outputFile}`);
 
-    sortSnippetsRecursively(componentData);
+  sortSnippetsRecursively(componentData);
 
-    const output = {
-        ...metadata,
-        tailwindplus: componentData,
-    };
+  const output = {
+    ...metadata,
+    tailwindplus: componentData,
+  };
 
-    // Note: using a replacer disables V8's fast-path JSON serialisation.
-    // See: https://v8.dev/blog/json-stringify#limitations
-    fs.writeFileSync(outputFile, JSON.stringify(output, sortedObjectKeys, 2));
-    logger.info(`Saved ${metadata.component_count} components to ${outputFile}`);
+  // Note: using a replacer disables V8's fast-path JSON serialisation.
+  // See: https://v8.dev/blog/json-stringify#limitations
+  fs.writeFileSync(outputFile, JSON.stringify(output, sortedObjectKeys, 2));
+  logger.info(`Saved ${metadata.component_count} components to ${outputFile}`);
 }
 
 /**
@@ -138,52 +138,52 @@ export function writeJsonOutput(
  * Tree structure: `<outputDir>/<product>/<category>/<subcategory>/<component>/<vX>/<framework>[-<mode>].<ext>`
  */
 export function writeDirectoryOutput(
-    outputDir: string,
-    componentData: ComponentData,
-    metadata: DownloadMetadata,
-    logger: Logger
+  outputDir: string,
+  componentData: ComponentData,
+  metadata: DownloadMetadata,
+  logger: Logger
 ): void {
-    logger.debug(`Writing directory output to ${outputDir}`);
+  logger.debug(`Writing directory output to ${outputDir}`);
 
-    fs.mkdirSync(outputDir, { recursive: true });
-    writeComponentFiles(outputDir, componentData as unknown as Record<string, unknown>, []);
-    fs.writeFileSync(
-        path.join(outputDir, 'metadata.json'),
-        JSON.stringify(metadata, sortedObjectKeys, 2)
-    );
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeComponentFiles(outputDir, componentData as unknown as Record<string, unknown>, []);
+  fs.writeFileSync(
+    path.join(outputDir, 'metadata.json'),
+    JSON.stringify(metadata, sortedObjectKeys, 2)
+  );
 
-    logger.info(`Saved ${metadata.component_count} components to directory ${outputDir}`);
+  logger.info(`Saved ${metadata.component_count} components to directory ${outputDir}`);
 }
 
 function writeComponentFiles(
-    outputDir: string,
-    data: Record<string, unknown>,
-    pathParts: string[]
+  outputDir: string,
+  data: Record<string, unknown>,
+  pathParts: string[]
 ): void {
-    for (const [key, value] of Object.entries(data)) {
-        if (!value || typeof value !== 'object') continue;
+  for (const [key, value] of Object.entries(data)) {
+    if (!value || typeof value !== 'object') continue;
 
-        const obj = value as Record<string, unknown>;
+    const obj = value as Record<string, unknown>;
 
-        if (Array.isArray(obj['snippets'])) {
-            for (const snippet of obj['snippets'] as Snippet[]) {
-                let ext: string;
-                switch (snippet.name) {
-                    case 'react': ext = 'jsx'; break;
-                    case 'vue': ext = 'vue'; break;
-                    default: ext = 'html';
-                }
-
-                const modePart = snippet.mode ? `-${snippet.mode}` : '';
-                const filename = `${snippet.name}${modePart}.${ext}`;
-                const versionDir = `v${snippet.version}`;
-                const snippetDir = path.join(outputDir, ...pathParts, key, versionDir);
-
-                fs.mkdirSync(snippetDir, { recursive: true });
-                fs.writeFileSync(path.join(snippetDir, filename), snippet.code);
-            }
-        } else {
-            writeComponentFiles(outputDir, obj, [...pathParts, key]);
+    if (Array.isArray(obj['snippets'])) {
+      for (const snippet of obj['snippets'] as Snippet[]) {
+        let ext: string;
+        switch (snippet.name) {
+        case 'react': ext = 'jsx'; break;
+        case 'vue': ext = 'vue'; break;
+        default: ext = 'html';
         }
+
+        const modePart = snippet.mode ? `-${snippet.mode}` : '';
+        const filename = `${snippet.name}${modePart}.${ext}`;
+        const versionDir = `v${snippet.version}`;
+        const snippetDir = path.join(outputDir, ...pathParts, key, versionDir);
+
+        fs.mkdirSync(snippetDir, { recursive: true });
+        fs.writeFileSync(path.join(snippetDir, filename), snippet.code);
+      }
+    } else {
+      writeComponentFiles(outputDir, obj, [...pathParts, key]);
     }
+  }
 }

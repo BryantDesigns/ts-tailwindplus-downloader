@@ -20,30 +20,30 @@ import type { Snippet } from '../types.js';
  * This ensures a consistent ordering regardless of download order.
  */
 export function sortSnippetsRecursively(data: unknown): void {
-    if (typeof data !== 'object' || data === null) return;
+  if (typeof data !== 'object' || data === null) return;
 
-    const obj = data as Record<string, unknown>;
+  const obj = data as Record<string, unknown>;
 
-    if (Array.isArray(obj['snippets'])) {
-        (obj['snippets'] as Snippet[]).sort((a, b) => {
-            // 1. Sort by framework name
-            const nameCompare = String(a.name ?? '').localeCompare(String(b.name ?? ''));
-            if (nameCompare !== 0) return nameCompare;
+  if (Array.isArray(obj['snippets'])) {
+    (obj['snippets'] as Snippet[]).sort((a, b) => {
+      // 1. Sort by framework name
+      const nameCompare = String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      if (nameCompare !== 0) return nameCompare;
 
-            // 2. Sort by Tailwind version (numeric)
-            const aVersion = a.version ?? -Infinity;
-            const bVersion = b.version ?? -Infinity;
-            if (aVersion !== bVersion) return aVersion - bVersion;
+      // 2. Sort by Tailwind version (numeric)
+      const aVersion = a.version ?? -Infinity;
+      const bVersion = b.version ?? -Infinity;
+      if (aVersion !== bVersion) return aVersion - bVersion;
 
-            // 3. Sort by mode
-            return String(a.mode ?? '').localeCompare(String(b.mode ?? ''));
-        });
-    }
+      // 3. Sort by mode
+      return String(a.mode ?? '').localeCompare(String(b.mode ?? ''));
+    });
+  }
 
-    // Recurse into every value regardless (handles nested product/category/subcategory)
-    for (const value of Object.values(obj)) {
-        sortSnippetsRecursively(value);
-    }
+  // Recurse into every value regardless (handles nested product/category/subcategory)
+  for (const value of Object.values(obj)) {
+    sortSnippetsRecursively(value);
+  }
 }
 
 // =============================================================================
@@ -60,12 +60,12 @@ export function sortSnippetsRecursively(data: unknown): void {
  * See: https://v8.dev/blog/json-stringify#limitations
  */
 export function sortedObjectKeys(key: string, value: unknown): unknown {
-    if (value instanceof Object && !(value instanceof Array)) {
-        return Object.fromEntries(
-            Object.keys(value as object)
-                .sort()
-                .map(k => [k, (value as Record<string, unknown>)[k]])
-        );
-    }
-    return value;
+  if (value instanceof Object && !(value instanceof Array)) {
+    return Object.fromEntries(
+      Object.keys(value as object)
+        .sort()
+        .map(k => [k, (value as Record<string, unknown>)[k]])
+    );
+  }
+  return value;
 }

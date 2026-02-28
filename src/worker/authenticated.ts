@@ -28,15 +28,15 @@ import type { Logger } from '../logger.js';
  * Excludes internal Inertia fields that are not part of the public data model.
  */
 export function shapeSnippet(raw: Record<string, unknown>): Snippet {
-    return {
-        code: raw['code'] as string,
-        name: raw['name'] as string,
-        language: raw['language'] as string,
-        version: raw['version'] as number,
-        mode: raw['mode'] as string | null,
-        supportsDarkMode: raw['supportsDarkMode'] as boolean,
-        preview: raw['preview'] as string,
-    };
+  return {
+    code: raw['code'] as string,
+    name: raw['name'] as string,
+    language: raw['language'] as string,
+    version: raw['version'] as number,
+    mode: raw['mode'] as string | null,
+    supportsDarkMode: raw['supportsDarkMode'] as boolean,
+    preview: raw['preview'] as string,
+  };
 }
 
 // =============================================================================
@@ -53,69 +53,69 @@ export function shapeSnippet(raw: Record<string, unknown>): Snippet {
  * @throws {DownloaderError} When navigation fails, times out, or format validation fails.
  */
 export async function extractAuthenticatedPageData(
-    page: Page,
-    url: string,
-    expectedFormat: Format,
-    config: DownloaderConfig,
-    logger: Logger
+  page: Page,
+  url: string,
+  expectedFormat: Format,
+  config: DownloaderConfig,
+  logger: Logger
 ): Promise<ComponentData> {
-    // Navigate without waiting for full load — we only need domcontentloaded
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+  // Navigate without waiting for full load — we only need domcontentloaded
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-    let subcategory;
-    try {
-        const dataHandle = await page.waitForFunction(
-            waitForAuthenticatedData,
-            {
-                url,
-                expectedFormat: {
-                    framework: expectedFormat.framework,
-                    version: expectedFormat.version,
-                    mode: expectedFormat.mode,
-                },
-                ecommerceUrl: config.urls.eCommerce,
-            },
-            { timeout: config.timeout }
-        );
-
-        subcategory = await dataHandle.evaluate(d => d);
-    } catch (error) {
-        if (error instanceof Error && error.name === 'TimeoutError') {
-            throw new DownloaderError(
-                `Timeout waiting for format "${expectedFormat}" on ${url}. ` +
-                `The account format may have been changed manually during download.`
-            );
-        }
-        throw error;
-    }
-
-    if (!subcategory) {
-        throw new DownloaderError(`Received no data from ${url} for format "${expectedFormat}"`);
-    }
-
-    // At this point data is guaranteed to be available and in the correct format
-    const { components, name: subcategoryName, category } = subcategory;
-    const categoryName = category.name;
-    const productName = category.product.name;
-
-    const componentData: ComponentData = {
-        [productName]: {
-            [categoryName]: {
-                [subcategoryName]: {},
-            },
+  let subcategory;
+  try {
+    const dataHandle = await page.waitForFunction(
+      waitForAuthenticatedData,
+      {
+        url,
+        expectedFormat: {
+          framework: expectedFormat.framework,
+          version: expectedFormat.version,
+          mode: expectedFormat.mode,
         },
-    };
-
-    for (const component of components) {
-        componentData[productName]![categoryName]![subcategoryName]![component.name] = {
-            name: component.name,
-            snippets: [shapeSnippet(component.snippet as unknown as Record<string, unknown>)],
-        };
-    }
-
-    logger.debug(
-        `Extracted ${components.length} components from ${productName}/${categoryName}/${subcategoryName}`
+        ecommerceUrl: config.urls.eCommerce,
+      },
+      { timeout: config.timeout }
     );
 
-    return componentData;
+    subcategory = await dataHandle.evaluate(d => d);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new DownloaderError(
+        `Timeout waiting for format "${expectedFormat}" on ${url}. ` +
+                `The account format may have been changed manually during download.`
+      );
+    }
+    throw error;
+  }
+
+  if (!subcategory) {
+    throw new DownloaderError(`Received no data from ${url} for format "${expectedFormat}"`);
+  }
+
+  // At this point data is guaranteed to be available and in the correct format
+  const { components, name: subcategoryName, category } = subcategory;
+  const categoryName = category.name;
+  const productName = category.product.name;
+
+  const componentData: ComponentData = {
+    [productName]: {
+      [categoryName]: {
+        [subcategoryName]: {},
+      },
+    },
+  };
+
+  for (const component of components) {
+        componentData[productName]![categoryName]![subcategoryName]![component.name] = {
+          name: component.name,
+          snippets: [shapeSnippet(component.snippet as unknown as Record<string, unknown>)],
+        };
+  }
+
+  logger.debug(
+    `Extracted ${components.length} components from ${productName}/${categoryName}/${subcategoryName}`
+  );
+
+  return componentData;
 }

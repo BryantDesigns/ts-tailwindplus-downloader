@@ -15,10 +15,10 @@ import fs from 'fs';
 // =============================================================================
 
 export const LogLevel = {
-    DEBUG: 1,
-    INFO: 2,
-    WARN: 3,
-    ERROR: 4,
+  DEBUG: 1,
+  INFO: 2,
+  WARN: 3,
+  ERROR: 4,
 } as const;
 
 export type LogLevelValue = (typeof LogLevel)[keyof typeof LogLevel];
@@ -49,82 +49,82 @@ export interface PrefixedLogger {
 // =============================================================================
 
 export class Logger {
-    private readonly level: LogLevelValue;
-    private readonly destination: 'file' | 'console';
-    private readonly logPath: string | null;
-    private readonly identifierWidth: number;
-    private logStream: fs.WriteStream | null = null;
+  private readonly level: LogLevelValue;
+  private readonly destination: 'file' | 'console';
+  private readonly logPath: string | null;
+  private readonly identifierWidth: number;
+  private logStream: fs.WriteStream | null = null;
 
-    constructor(options: LoggerOptions = {}) {
-        this.level = options.debug ? LogLevel.DEBUG : LogLevel.INFO;
-        this.destination = options.log ? 'file' : 'console';
-        this.logPath = options.log ?? null;
-        this.identifierWidth = options.identifierWidth ?? 0;
+  constructor(options: LoggerOptions = {}) {
+    this.level = options.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    this.destination = options.log ? 'file' : 'console';
+    this.logPath = options.log ?? null;
+    this.identifierWidth = options.identifierWidth ?? 0;
 
-        if (this.logPath) {
-            this.logStream = fs.createWriteStream(this.logPath, { flags: 'a' });
-        }
+    if (this.logPath) {
+      this.logStream = fs.createWriteStream(this.logPath, { flags: 'a' });
     }
+  }
 
-    private _log(level: LogLevelValue, message: string, stream: 'stdout' | 'stderr' = 'stdout'): void {
-        if (level < this.level) return;
+  private _log(level: LogLevelValue, message: string, stream: 'stdout' | 'stderr' = 'stdout'): void {
+    if (level < this.level) return;
 
-        const levelNames: Record<LogLevelValue, string> = {
-            [LogLevel.DEBUG]: 'DEBUG',
-            [LogLevel.INFO]: 'INFO ',
-            [LogLevel.WARN]: 'WARN ',
-            [LogLevel.ERROR]: 'ERROR',
-        };
+    const levelNames: Record<LogLevelValue, string> = {
+      [LogLevel.DEBUG]: 'DEBUG',
+      [LogLevel.INFO]: 'INFO ',
+      [LogLevel.WARN]: 'WARN ',
+      [LogLevel.ERROR]: 'ERROR',
+    };
 
-        const paddedLevel = levelNames[level] ?? 'UNKN ';
+    const paddedLevel = levelNames[level] ?? 'UNKN ';
 
-        if (this.logStream) {
-            this.logStream.write(`[${paddedLevel}] ${message}\n`);
-        } else {
-            const consoleMessage = `[${paddedLevel}] ${message}`;
-            if (stream === 'stderr') {
-                console.error(consoleMessage);
-            } else {
-                console.log(consoleMessage);
-            }
-        }
+    if (this.logStream) {
+      this.logStream.write(`[${paddedLevel}] ${message}\n`);
+    } else {
+      const consoleMessage = `[${paddedLevel}] ${message}`;
+      if (stream === 'stderr') {
+        console.error(consoleMessage);
+      } else {
+        console.log(consoleMessage);
+      }
     }
+  }
 
-    /**
+  /**
      * Returns a namespaced logger that prefixes every message with the given identifier.
      * Used to distinguish output from Main vs each Worker.
      */
-    prefix(identifier: string): PrefixedLogger {
-        const formattedIdentifier = `[${identifier.padEnd(this.identifierWidth)}]`;
-        return {
-            debug: (message: string) => this.debug(`${formattedIdentifier} ${message}`),
-            info: (message: string) => this.info(`${formattedIdentifier} ${message}`),
-            warn: (message: string) => this.warn(`${formattedIdentifier} ${message}`),
-            error: (message: string) => this.error(`${formattedIdentifier} ${message}`),
-        };
-    }
+  prefix(identifier: string): PrefixedLogger {
+    const formattedIdentifier = `[${identifier.padEnd(this.identifierWidth)}]`;
+    return {
+      debug: (message: string) => this.debug(`${formattedIdentifier} ${message}`),
+      info: (message: string) => this.info(`${formattedIdentifier} ${message}`),
+      warn: (message: string) => this.warn(`${formattedIdentifier} ${message}`),
+      error: (message: string) => this.error(`${formattedIdentifier} ${message}`),
+    };
+  }
 
-    debug(message: string): void {
-        this._log(LogLevel.DEBUG, message, 'stdout');
-    }
+  debug(message: string): void {
+    this._log(LogLevel.DEBUG, message, 'stdout');
+  }
 
-    info(message: string): void {
-        this._log(LogLevel.INFO, message, 'stdout');
-    }
+  info(message: string): void {
+    this._log(LogLevel.INFO, message, 'stdout');
+  }
 
-    warn(message: string): void {
-        this._log(LogLevel.WARN, message, 'stderr');
-    }
+  warn(message: string): void {
+    this._log(LogLevel.WARN, message, 'stderr');
+  }
 
-    error(message: string): void {
-        this._log(LogLevel.ERROR, message, 'stderr');
-    }
+  error(message: string): void {
+    this._log(LogLevel.ERROR, message, 'stderr');
+  }
 
-    /** Flushes and closes the log file stream. Safe to call multiple times. */
-    close(): void {
-        if (this.logStream) {
-            this.logStream.end();
-            this.logStream = null;
-        }
+  /** Flushes and closes the log file stream. Safe to call multiple times. */
+  close(): void {
+    if (this.logStream) {
+      this.logStream.end();
+      this.logStream = null;
     }
+  }
 }

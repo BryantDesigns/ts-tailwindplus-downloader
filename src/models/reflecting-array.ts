@@ -13,23 +13,23 @@
  */
 
 export class ReflectingArray<T> implements Iterable<T> {
-    private readonly _items: T[];
-    private _direction: 1 | -1 = 1;
+  private readonly _items: T[];
+  private _direction: 1 | -1 = 1;
 
-    constructor(...items: T[]) {
-        this._items = items;
-    }
+  constructor(...items: T[]) {
+    this._items = items;
+  }
 
-    *[Symbol.iterator](): Generator<T> {
-        if (this._direction === 1) {
-            yield* this._items;
-        } else {
-            for (let i = this._items.length - 1; i >= 0; i--) {
-                // Safe: bounds are controlled by the loop
-                yield this._items[i] as T;
-            }
-        }
-        // Flip direction for the next traversal
-        this._direction = this._direction === 1 ? -1 : 1;
+  *[Symbol.iterator](): Generator<T> {
+    if (this._direction === 1) {
+      yield* this._items;
+    } else {
+      for (let i = this._items.length - 1; i >= 0; i--) {
+        // Safe: bounds are controlled by the loop
+        yield this._items[i] as T;
+      }
     }
+    // Flip direction for the next traversal
+    this._direction = this._direction === 1 ? -1 : 1;
+  }
 }

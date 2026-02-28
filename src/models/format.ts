@@ -26,37 +26,37 @@ export interface FormatOptions {
 // =============================================================================
 
 export class Format {
-    readonly framework: string;
-    readonly version: number;
-    readonly mode: string | null;
+  readonly framework: string;
+  readonly version: number;
+  readonly mode: string | null;
 
-    private readonly _stringValue: string;
+  private readonly _stringValue: string;
 
-    constructor(options: FormatOptions) {
-        this.framework = options.framework;
-        this.version = options.version;
-        this.mode = options.mode;
+  constructor(options: FormatOptions) {
+    this.framework = options.framework;
+    this.version = options.version;
+    this.mode = options.mode;
 
-        // String representation: "react-v4-light" or "html-v3" (eCommerce has no mode)
-        this._stringValue =
+    // String representation: "react-v4-light" or "html-v3" (eCommerce has no mode)
+    this._stringValue =
             this.mode === null
-                ? `${this.framework}-v${this.version}`
-                : `${this.framework}-v${this.version}-${this.mode}`;
+              ? `${this.framework}-v${this.version}`
+              : `${this.framework}-v${this.version}-${this.mode}`;
 
-        Object.freeze(this);
-    }
+    Object.freeze(this);
+  }
 
-    /** Returns the string key for comparison and display. */
-    valueOf(): string {
-        return this._stringValue;
-    }
+  /** Returns the string key for comparison and display. */
+  valueOf(): string {
+    return this._stringValue;
+  }
 
-    toString(): string {
-        return this._stringValue;
-    }
+  toString(): string {
+    return this._stringValue;
+  }
 
-    /** Strict equality check against another Format instance. */
-    equals(other: Format): boolean {
-        return other instanceof Format && this._stringValue === other._stringValue;
-    }
+  /** Strict equality check against another Format instance. */
+  equals(other: Format): boolean {
+    return other instanceof Format && this._stringValue === other._stringValue;
+  }
 }

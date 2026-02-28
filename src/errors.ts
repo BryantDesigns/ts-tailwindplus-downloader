@@ -15,11 +15,11 @@
  * gracefully with a user-readable message instead of a stack trace.
  */
 export class DownloaderError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'DownloaderError';
+  constructor(message: string) {
+    super(message);
+    this.name = 'DownloaderError';
 
-        // Maintains proper prototype chain in transpiled ES5
-        Object.setPrototypeOf(this, DownloaderError.prototype);
-    }
+    // Maintains proper prototype chain in transpiled ES5
+    Object.setPrototypeOf(this, DownloaderError.prototype);
+  }
 }

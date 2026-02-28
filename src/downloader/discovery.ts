@@ -33,52 +33,52 @@ import type { Logger } from '../logger.js';
  * @param maxRetries  Number of retries before throwing
  */
 export async function discoverUrls(
-    page: Page,
-    config: DownloaderConfig,
-    logger: Logger,
-    maxRetries = 3
+  page: Page,
+  config: DownloaderConfig,
+  logger: Logger,
+  maxRetries = 3
 ): Promise<string[]> {
-    logger.info('Discovering component URLs...');
+  logger.info('Discovering component URLs...');
 
-    let attempt = 0;
-    while (attempt <= maxRetries) {
-        try {
-            await page.goto(config.urls.discovery, { waitUntil: 'domcontentloaded' });
+  let attempt = 0;
+  while (attempt <= maxRetries) {
+    try {
+      await page.goto(config.urls.discovery, { waitUntil: 'domcontentloaded' });
 
-            // Wait for navigation links to render
-            await page.waitForFunction(() => {
-                const app = document.querySelector('div#app');
-                return app?.getAttribute('data-page') !== null;
-            }, { timeout: config.timeout });
+      // Wait for navigation links to render
+      await page.waitForFunction(() => {
+        const app = document.querySelector('div#app');
+        return app?.getAttribute('data-page') !== null;
+      }, { timeout: config.timeout });
 
-            const urls = await page.evaluate((baseUrl: string) => {
-                const data = document.querySelector('div#app')?.getAttribute('data-page');
-                if (!data) return [];
+      const urls = await page.evaluate((baseUrl: string) => {
+        const data = document.querySelector('div#app')?.getAttribute('data-page');
+        if (!data) return [];
 
-                const parsed = JSON.parse(data) as {
+        const parsed = JSON.parse(data) as {
                     props?: { categories?: Array<{ subcategories?: Array<{ url?: string }> }> };
                 };
 
-                return (parsed.props?.categories ?? []).flatMap(
-                    cat => (cat.subcategories ?? []).map(sub => sub.url).filter((u): u is string => !!u)
-                ).map(relativeUrl => `${baseUrl}${relativeUrl}`);
-            }, config.urls.base);
+        return (parsed.props?.categories ?? []).flatMap(
+          cat => (cat.subcategories ?? []).map(sub => sub.url).filter((u): u is string => !!u)
+        ).map(relativeUrl => `${baseUrl}${relativeUrl}`);
+      }, config.urls.base);
 
-            logger.info(`Discovered ${urls.length} component pages`);
-            return urls;
-        } catch (error) {
-            attempt++;
-            const msg = error instanceof Error ? error.message : String(error);
+      logger.info(`Discovered ${urls.length} component pages`);
+      return urls;
+    } catch (error) {
+      attempt++;
+      const msg = error instanceof Error ? error.message : String(error);
 
-            if (attempt > maxRetries) {
-                throw new DownloaderError(`URL discovery failed after ${maxRetries} retries: ${msg}`);
-            }
+      if (attempt > maxRetries) {
+        throw new DownloaderError(`URL discovery failed after ${maxRetries} retries: ${msg}`);
+      }
 
-            logger.warn(`URL discovery attempt ${attempt} failed: ${msg}, retrying...`);
-        }
+      logger.warn(`URL discovery attempt ${attempt} failed: ${msg}, retrying...`);
     }
+  }
 
-    throw new DownloaderError('URL discovery failed unexpectedly');
+  throw new DownloaderError('URL discovery failed unexpectedly');
 }
 
 // =============================================================================
@@ -90,16 +90,16 @@ export async function discoverUrls(
  * Used when `--debug-url-file` is provided to test against a specific subset.
  */
 export function loadUrlsFromFile(filePath: string, logger: Logger): string[] {
-    logger.debug(`Loading URLs from file: ${filePath}`);
+  logger.debug(`Loading URLs from file: ${filePath}`);
 
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const urls = content
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0 && !line.startsWith('#'));
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const urls = content
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0 && !line.startsWith('#'));
 
-    logger.info(`Loaded ${urls.length} URLs from ${filePath}`);
-    return urls;
+  logger.info(`Loaded ${urls.length} URLs from ${filePath}`);
+  return urls;
 }
 
 // =============================================================================
@@ -111,5 +111,5 @@ export function loadUrlsFromFile(filePath: string, logger: Logger): string[] {
  * Used after URL discovery to populate the DiscoveryResult metadata.
  */
 export function buildDiscoveryResult(urls: string[], componentCount: number): DiscoveryResult {
-    return { urls, urlCount: urls.length, componentCount };
+  return { urls, urlCount: urls.length, componentCount };
 }

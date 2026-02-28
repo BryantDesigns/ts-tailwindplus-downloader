@@ -72,16 +72,16 @@ export interface PageReadyArgs {
  * @returns The subcategory object if valid data is found, false otherwise
  */
 export function waitForAuthenticatedData(
-    args: AuthenticatedDataArgs
+  args: AuthenticatedDataArgs
 ): SubcategoryPageData | false {
-    try {
-        const app = document.querySelector('div#app');
-        if (!app) return false;
+  try {
+    const app = document.querySelector('div#app');
+    if (!app) return false;
 
-        const pageDataJson = app.getAttribute('data-page');
-        if (!pageDataJson) return false;
+    const pageDataJson = app.getAttribute('data-page');
+    if (!pageDataJson) return false;
 
-        const pageData = JSON.parse(pageDataJson) as {
+    const pageData = JSON.parse(pageDataJson) as {
             props?: {
                 subcategory?: SubcategoryPageData & {
                     components: Array<{
@@ -91,30 +91,30 @@ export function waitForAuthenticatedData(
             };
         };
 
-        const subcategory = pageData?.props?.subcategory;
-        const components = subcategory?.components;
+    const subcategory = pageData?.props?.subcategory;
+    const components = subcategory?.components;
 
-        if (!Array.isArray(components) || components.length === 0) return false;
+    if (!Array.isArray(components) || components.length === 0) return false;
 
-        // For eCommerce pages, mode is null (not a format dimension)
-        const isEcommerce = args.url.startsWith(args.ecommerceUrl);
-        const expectedMode = isEcommerce ? null : args.expectedFormat.mode;
+    // For eCommerce pages, mode is null (not a format dimension)
+    const isEcommerce = args.url.startsWith(args.ecommerceUrl);
+    const expectedMode = isEcommerce ? null : args.expectedFormat.mode;
 
-        const allSnippetsValid = components.every(component => {
-            const snippet = component.snippet;
-            return (
-                snippet.name === args.expectedFormat.framework &&
+    const allSnippetsValid = components.every(component => {
+      const snippet = component.snippet;
+      return (
+        snippet.name === args.expectedFormat.framework &&
                 snippet.version === args.expectedFormat.version &&
                 snippet.mode === expectedMode
-            );
-        });
+      );
+    });
 
-        if (!allSnippetsValid) return false;
+    if (!allSnippetsValid) return false;
 
-        return subcategory as SubcategoryPageData;
-    } catch {
-        return false;
-    }
+    return subcategory as SubcategoryPageData;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -124,8 +124,8 @@ export function waitForAuthenticatedData(
  * Used as a lightweight readiness check before reading page data.
  */
 export function waitForPageReady(): boolean {
-    const app = document.querySelector('#app');
-    return !!(app && app.getAttribute('data-page'));
+  const app = document.querySelector('#app');
+  return !!(app && app.getAttribute('data-page'));
 }
 
 /**
@@ -145,14 +145,14 @@ export function extractUnauthenticatedPageInfo(): {
         name: string;
         initialSnippet: Snippet;
     }>;
-} {
-    const appEl = document.querySelector('#app');
-    if (!appEl) throw new Error('No #app element found');
+    } {
+  const appEl = document.querySelector('#app');
+  if (!appEl) throw new Error('No #app element found');
 
-    const raw = appEl.getAttribute('data-page');
-    if (!raw) throw new Error('No data-page attribute on #app');
+  const raw = appEl.getAttribute('data-page');
+  if (!raw) throw new Error('No data-page attribute on #app');
 
-    const data = JSON.parse(raw) as {
+  const data = JSON.parse(raw) as {
         props: {
             subcategory: {
                 name: string;
@@ -168,14 +168,14 @@ export function extractUnauthenticatedPageInfo(): {
         };
     };
 
-    const sub = data.props.subcategory;
+  const sub = data.props.subcategory;
 
-    return {
-        product: sub.category.product.name,
-        category: sub.category.name,
-        subcategory: sub.name,
-        downloadableComponents: sub.components
-            .filter(c => c.downloadable && c.preview === 'light')
-            .map(c => ({ uuid: c.uuid, name: c.name, initialSnippet: c.snippet })),
-    };
+  return {
+    product: sub.category.product.name,
+    category: sub.category.name,
+    subcategory: sub.name,
+    downloadableComponents: sub.components
+      .filter(c => c.downloadable && c.preview === 'light')
+      .map(c => ({ uuid: c.uuid, name: c.name, initialSnippet: c.snippet })),
+  };
 }

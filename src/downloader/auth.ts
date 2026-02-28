@@ -27,38 +27,38 @@ import type { Logger } from '../logger.js';
  * file on disk. Returns the parsed state or null if the file doesn't exist.
  */
 export function loadSession(sessionPath: string, logger: Logger): object | null {
-    if (!fs.existsSync(sessionPath)) {
-        logger.debug(`No session file found at ${sessionPath}`);
-        return null;
-    }
+  if (!fs.existsSync(sessionPath)) {
+    logger.debug(`No session file found at ${sessionPath}`);
+    return null;
+  }
 
-    try {
-        const raw = fs.readFileSync(sessionPath, 'utf-8');
-        logger.debug(`Loaded session from ${sessionPath}`);
-        return JSON.parse(raw) as object;
-    } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        logger.warn(`Failed to parse session file: ${msg}`);
-        return null;
-    }
+  try {
+    const raw = fs.readFileSync(sessionPath, 'utf-8');
+    logger.debug(`Loaded session from ${sessionPath}`);
+    return JSON.parse(raw) as object;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn(`Failed to parse session file: ${msg}`);
+    return null;
+  }
 }
 
 /**
  * Saves a Playwright storage state snapshot to disk for reuse on the next run.
  */
 export async function saveSession(
-    context: BrowserContext,
-    sessionPath: string,
-    logger: Logger
+  context: BrowserContext,
+  sessionPath: string,
+  logger: Logger
 ): Promise<void> {
-    try {
-        const state = await context.storageState();
-        fs.writeFileSync(sessionPath, JSON.stringify(state, null, 2));
-        logger.debug(`Session saved to ${sessionPath}`);
-    } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        logger.warn(`Failed to save session: ${msg}`);
-    }
+  try {
+    const state = await context.storageState();
+    fs.writeFileSync(sessionPath, JSON.stringify(state, null, 2));
+    logger.debug(`Session saved to ${sessionPath}`);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn(`Failed to save session: ${msg}`);
+  }
 }
 
 // =============================================================================
@@ -72,33 +72,33 @@ export async function saveSession(
  * If the site redirects to the login page, the session is invalid.
  */
 export async function validateSession(
-    page: Page,
-    config: DownloaderConfig,
-    logger: Logger
+  page: Page,
+  config: DownloaderConfig,
+  logger: Logger
 ): Promise<boolean> {
-    logger.debug('Validating session...');
+  logger.debug('Validating session...');
 
-    try {
-        const response = await page.goto(config.urls.plus, { waitUntil: 'domcontentloaded' });
+  try {
+    const response = await page.goto(config.urls.plus, { waitUntil: 'domcontentloaded' });
 
-        if (!response) {
-            logger.debug('No response from validation page');
-            return false;
-        }
-
-        // If redirected to login, the session has expired
-        if (page.url().includes('/login')) {
-            logger.debug('Session invalid: redirected to login');
-            return false;
-        }
-
-        logger.debug('Session is valid');
-        return true;
-    } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        logger.debug(`Session validation error: ${msg}`);
-        return false;
+    if (!response) {
+      logger.debug('No response from validation page');
+      return false;
     }
+
+    // If redirected to login, the session has expired
+    if (page.url().includes('/login')) {
+      logger.debug('Session invalid: redirected to login');
+      return false;
+    }
+
+    logger.debug('Session is valid');
+    return true;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.debug(`Session validation error: ${msg}`);
+    return false;
+  }
 }
 
 // =============================================================================
@@ -113,33 +113,33 @@ export async function validateSession(
  * should prefer interactive prompts and rely on saved sessions where possible.
  */
 export function loadCredentials(
-    credentialsPath: string,
-    logger: Logger
+  credentialsPath: string,
+  logger: Logger
 ): Pick<Credentials, 'email' | 'password'> | null {
-    if (!fs.existsSync(credentialsPath)) {
-        logger.debug(`No credentials file at ${credentialsPath}`);
-        return null;
-    }
+  if (!fs.existsSync(credentialsPath)) {
+    logger.debug(`No credentials file at ${credentialsPath}`);
+    return null;
+  }
 
-    try {
-        const raw = fs.readFileSync(credentialsPath, 'utf-8');
-        const parsed = JSON.parse(raw) as { email: string; password: string };
-        logger.debug(`Loaded credentials from ${credentialsPath}`);
-        return { email: parsed.email, password: parsed.password };
-    } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        logger.warn(`Failed to parse credentials file: ${msg}`);
-        return null;
-    }
+  try {
+    const raw = fs.readFileSync(credentialsPath, 'utf-8');
+    const parsed = JSON.parse(raw) as { email: string; password: string };
+    logger.debug(`Loaded credentials from ${credentialsPath}`);
+    return { email: parsed.email, password: parsed.password };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn(`Failed to parse credentials file: ${msg}`);
+    return null;
+  }
 }
 
 /**
  * Prompts the user interactively for their TailwindPlus email and password.
  */
 export async function promptCredentials(): Promise<Pick<Credentials, 'email' | 'password'>> {
-    const email = await read({ prompt: 'TailwindPlus email: ' });
-    const password = await read({ prompt: 'TailwindPlus password: ', silent: true });
-    return { email: email.trim(), password };
+  const email = await read({ prompt: 'TailwindPlus email: ' });
+  const password = await read({ prompt: 'TailwindPlus password: ', silent: true });
+  return { email: email.trim(), password };
 }
 
 /**
@@ -147,17 +147,17 @@ export async function promptCredentials(): Promise<Pick<Credentials, 'email' | '
  * Exits if no credentials are available.
  */
 export async function resolveCredentials(
-    credentialsPath: string,
-    logger: Logger
+  credentialsPath: string,
+  logger: Logger
 ): Promise<Credentials> {
-    const fromFile = loadCredentials(credentialsPath, logger);
-    if (fromFile) {
-        return { ...fromFile, source: 'file' };
-    }
+  const fromFile = loadCredentials(credentialsPath, logger);
+  if (fromFile) {
+    return { ...fromFile, source: 'file' };
+  }
 
-    logger.info('No credentials file found, prompting for credentials...');
-    const fromPrompt = await promptCredentials();
-    return { ...fromPrompt, source: 'prompt' };
+  logger.info('No credentials file found, prompting for credentials...');
+  const fromPrompt = await promptCredentials();
+  return { ...fromPrompt, source: 'prompt' };
 }
 
 // =============================================================================
@@ -173,35 +173,35 @@ export async function resolveCredentials(
  * @throws {DownloaderError} If login fails or the page doesn't redirect.
  */
 export async function login(
-    page: Page,
-    credentials: Pick<Credentials, 'email' | 'password'>,
-    config: DownloaderConfig,
-    logger: Logger
+  page: Page,
+  credentials: Pick<Credentials, 'email' | 'password'>,
+  config: DownloaderConfig,
+  logger: Logger
 ): Promise<void> {
-    logger.info('Logging in to TailwindPlus...');
+  logger.info('Logging in to TailwindPlus...');
 
-    await page.goto(config.urls.login, { waitUntil: 'domcontentloaded' });
+  await page.goto(config.urls.login, { waitUntil: 'domcontentloaded' });
 
-    try {
-        await page.fill('input[name="email"]', credentials.email);
-        await page.fill('input[name="password"]', credentials.password);
-        await page.click('button[type="submit"]');
+  try {
+    await page.fill('input[name="email"]', credentials.email);
+    await page.fill('input[name="password"]', credentials.password);
+    await page.click('button[type="submit"]');
 
-        // Wait until we navigate away from the login page
-        await page.waitForURL(url => !url.toString().includes('/login'), {
-            timeout: config.timeout,
-        });
+    // Wait until we navigate away from the login page
+    await page.waitForURL(url => !url.toString().includes('/login'), {
+      timeout: config.timeout,
+    });
 
-        if (page.url().includes('/login')) {
-            throw new DownloaderError('Login failed: still on login page after submit');
-        }
-
-        logger.info('Login successful');
-    } catch (error) {
-        if (error instanceof DownloaderError) throw error;
-        const msg = error instanceof Error ? error.message : String(error);
-        throw new DownloaderError(`Login failed: ${msg}`);
+    if (page.url().includes('/login')) {
+      throw new DownloaderError('Login failed: still on login page after submit');
     }
+
+    logger.info('Login successful');
+  } catch (error) {
+    if (error instanceof DownloaderError) throw error;
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new DownloaderError(`Login failed: ${msg}`);
+  }
 }
 
 /**
@@ -212,20 +212,20 @@ export async function login(
  * 3. Saves the new session for future runs.
  */
 export async function ensureAuthenticated(
-    page: Page,
-    context: BrowserContext,
-    config: DownloaderConfig,
-    logger: Logger
+  page: Page,
+  context: BrowserContext,
+  config: DownloaderConfig,
+  logger: Logger
 ): Promise<void> {
-    const isValid = await validateSession(page, config, logger);
-    if (isValid) {
-        logger.info('Using existing session');
-        return;
-    }
+  const isValid = await validateSession(page, config, logger);
+  if (isValid) {
+    logger.info('Using existing session');
+    return;
+  }
 
-    const credentials = await resolveCredentials(config.credentials, logger);
-    await login(page, credentials, config, logger);
-    await saveSession(context, config.session, logger);
+  const credentials = await resolveCredentials(config.credentials, logger);
+  await login(page, credentials, config, logger);
+  await saveSession(context, config.session, logger);
 }
 
 // =============================================================================
@@ -234,15 +234,15 @@ export async function ensureAuthenticated(
 
 /** Returns true if the given path already exists on disk. */
 export function outputExists(outputPath: string): boolean {
-    return fs.existsSync(outputPath);
+  return fs.existsSync(outputPath);
 }
 
 /**
  * Ensures that the parent directory of `outputPath` exists, creating it if needed.
  */
 export function ensureOutputDirectory(outputPath: string): void {
-    const dir = path.dirname(outputPath);
-    if (dir && !fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
+  const dir = path.dirname(outputPath);
+  if (dir && !fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
