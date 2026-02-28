@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Smoke tests for tailwindplus-downloader option combinations.
+# Smoke tests for ts-tailwindplus-downloader option combinations.
 #
 # Requires an authenticated session or credentials file.  Run from the repo
 # root or from within test/.
@@ -82,19 +82,19 @@ mkdir -p "$RUN_DIR"
 # ── JSON output ──────────────────────────────────────────────────────────────
 
 run_test "JSON: basic output to fixed path" 0 "" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output="$JSON_OUT"
 
 check_file_exists "JSON: output file created" "$JSON_OUT"
 
 run_test "JSON: existing output, non-TTY aborts" 1 "notty" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output="$JSON_OUT"
 
 run_test "JSON: existing output, --overwrite proceeds" 0 "" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output="$JSON_OUT" \
     --overwrite
@@ -102,7 +102,7 @@ run_test "JSON: existing output, --overwrite proceeds" 0 "" \
 # ── dir output ───────────────────────────────────────────────────────────────
 
 run_test "dir: basic output to fixed path" 0 "" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output-format=dir \
     --output="$DIR_OUT"
@@ -111,13 +111,13 @@ check_file_exists "dir: output directory created" "$DIR_OUT"
 check_file_exists "dir: metadata.json written" "$DIR_OUT/metadata.json"
 
 run_test "dir: existing output, non-TTY aborts" 1 "notty" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output-format=dir \
     --output="$DIR_OUT"
 
 run_test "dir: existing output, --overwrite proceeds" 0 "" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output-format=dir \
     --output="$DIR_OUT" \
@@ -128,7 +128,7 @@ check_file_exists "dir: output recreated after --overwrite" "$DIR_OUT/metadata.j
 # ── dir + --log ───────────────────────────────────────────────────────────────
 
 run_test "dir: output with --log" 0 "" \
-  node tailwindplus-downloader.js \
+  npx tsx src/index.ts \
     --debug-url-file="$URL_FILE" \
     --output-format=dir \
     --output="$DIR_LOG_OUT" \
@@ -140,7 +140,7 @@ check_file_exists "dir: --log creates correctly named .log file" "${DIR_LOG_OUT}
 
 header "dir: default timestamped output path (no --output)"
 set +o errexit
-TS_OUTPUT=$(node tailwindplus-downloader.js \
+TS_OUTPUT=$(npx tsx src/index.ts \
   --debug-url-file="$URL_FILE" \
   --output-format=dir \
   2>&1)

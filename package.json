@@ -13,8 +13,8 @@
         "scripts/create-skeleton.sh"
     ],
     "bin": {
-        "tailwindplus-downloader": "dist/index.js",
-        "tailwindplus-diff": "dist/diff/tailwindplus-diff.js",
+        "ts-tailwindplus-downloader": "dist/index.js",
+        "ts-tailwindplus-diff": "dist/diff/tailwindplus-diff.js",
         "twp-downloader": "dist/index.js",
         "twp-diff": "dist/diff/tailwindplus-diff.js",
         "twp-create-skeleton": "scripts/create-skeleton.sh"
@@ -30,6 +30,7 @@
         "@types/yargs": "^17.0.0",
         "eslint": "^10.0.2",
         "globals": "^17.3.0",
+        "tsx": "^4.21.0",
         "typescript": "^5.7.0",
         "typescript-eslint": "^8.56.1"
     },

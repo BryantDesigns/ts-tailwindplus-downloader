@@ -1,5 +1,6 @@
 const js = require('@eslint/js');
 const globals = require('globals');
+const tseslint = require('typescript-eslint');
 
 module.exports = [
   // Explicitly ignore directories and files
@@ -25,9 +26,17 @@ module.exports = [
     },
   },
 
-  // Node.js files
+  // TypeScript parser for .ts files
   {
-    files: ["**/*.js"],
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tseslint.parser,
+    },
+  },
+
+  // Node.js files (JS + TS)
+  {
+    files: ["**/*.js", "**/*.ts"],
     ...js.configs.recommended,
     rules: {
       // Rules specific to web scraping with Playwright

@@ -44,8 +44,8 @@ export function createConfig(): DownloaderConfig {
     version,
     output: `${outputBase}-${version}.json`,
 
-    session: '.tailwindplus-downloader-session.json',
-    credentials: '.tailwindplus-downloader-credentials.json',
+    session: '.ts-tailwindplus-downloader-session.json',
+    credentials: '.ts-tailwindplus-downloader-credentials.json',
 
     urls: {
       base,
