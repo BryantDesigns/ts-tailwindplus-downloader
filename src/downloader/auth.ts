@@ -62,6 +62,37 @@ export async function saveSession(
 }
 
 // =============================================================================
+// Navigation helpers
+// =============================================================================
+
+/**
+ * Navigates to `url`, retrying up to `maxRetries` times on TimeoutError.
+ * Other errors are thrown immediately.
+ */
+async function retryGoto(
+  page: Page,
+  url: string,
+  maxRetries: number,
+  logger: Logger
+): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      return;
+    } catch (error) {
+      const isTimeout = error instanceof Error && error.name === 'TimeoutError';
+      if (!isTimeout) throw error;
+      if (attempt === maxRetries) {
+        throw new DownloaderError(
+          `Navigation to ${url} failed after ${maxRetries} attempts. Please re-run.`
+        );
+      }
+      logger.warn(`Navigation timeout (attempt ${attempt}/${maxRetries}): ${url}`);
+    }
+  }
+}
+
+// =============================================================================
 // Session validation
 // =============================================================================
 
@@ -80,7 +111,7 @@ export async function validateSession(
   logger.debug('Validating session...');
 
   try {
-    await page.goto(config.urls.plus, { waitUntil: 'domcontentloaded' });
+    await retryGoto(page, config.urls.plus, config.retries.maxRetries, logger);
 
     const signInLink = page.getByRole('link', { name: 'Sign in' });
     const accountButton = page.getByRole('button', { name: 'Account' });
@@ -163,42 +194,143 @@ export async function resolveCredentials(
 // =============================================================================
 
 /**
- * Performs a full login flow on `page` using the provided credentials.
+ * Performs login with resilience to React re-renders clearing filled inputs.
  *
- * Navigates to the login page, fills the email and password fields, submits,
- * then waits for a redirect away from the login page to confirm success.
+ * Uses Promise.race() to detect:
+ *   - Successful navigation away from login page
+ *   - Bad credentials error message appearing
+ *   - Native form validation failure (React re-render clears inputs → retry)
  *
- * @throws {DownloaderError} If login fails or the page doesn't redirect.
+ * Returns 'success' | 'bad_credentials' | 'timeout'
+ * @throws {DownloaderError} if the login form is not found
  */
-export async function login(
+async function resilientLogin(
   page: Page,
   credentials: Pick<Credentials, 'email' | 'password'>,
   config: DownloaderConfig,
   logger: Logger
-): Promise<void> {
-  logger.info('Logging in to TailwindPlus...');
+): Promise<'success' | 'bad_credentials' | 'timeout'> {
+  const startTime = Date.now();
+  const loginTimeout = config.loginTimeout ?? 15000;
+  const outcomeTimeout = 5000;
 
-  await page.goto(config.urls.login, { waitUntil: 'domcontentloaded' });
+  const emailInput = page.getByRole('textbox', { name: 'Email' });
+  const passwordInput = page.getByRole('textbox', { name: 'Password' });
+  const submitButton = page.getByRole('button', { name: 'Sign in to account' });
 
-  try {
-    await page.fill('input[name="email"]', credentials.email);
-    await page.fill('input[name="password"]', credentials.password);
-    await page.click('button[type="submit"]');
+  while (Date.now() - startTime < loginTimeout) {
+    await emailInput.fill(credentials.email);
+    await passwordInput.fill(credentials.password);
 
-    // Wait until we navigate away from the login page
-    await page.waitForURL(url => !url.toString().includes('/login'), {
-      timeout: config.timeout,
+    // Outcome 1: Successful navigation away from login page
+    const navigationPromise = page
+      .waitForURL((url) => !url.toString().includes('/login'), { timeout: outcomeTimeout })
+      .then(() => 'success' as const);
+
+    // Outcome 2: Bad credentials error message
+    const badCredentialsPromise = page
+      .getByText('These credentials do not match our records')
+      .waitFor({ state: 'visible', timeout: outcomeTimeout })
+      .then(() => 'bad_credentials' as const);
+
+    // Outcome 3: Native HTML5 form validation failure (React re-render cleared inputs)
+    const validationFailedPromise = page
+      .evaluate((selector: string) => {
+        return new Promise<'validation_failed' | 'form_not_found'>((resolve) => {
+          const form = document.querySelector(selector);
+          if (!form) return resolve('form_not_found');
+          const requiredInputs = form.querySelectorAll<HTMLInputElement>('[required]');
+          if (requiredInputs.length === 0) return;
+          requiredInputs.forEach((input) => {
+            input.addEventListener(
+              'invalid',
+              (e) => {
+                e.preventDefault();
+                resolve('validation_failed');
+              },
+              { once: true }
+            );
+          });
+        });
+      }, 'form')
+      .catch((error: Error) => {
+        if (error.message.includes('Execution context was destroyed')) {
+          return 'context_destroyed_by_navigation' as const;
+        }
+        throw error;
+      });
+
+    await submitButton.click();
+
+    const winner = await Promise.race([
+      navigationPromise,
+      badCredentialsPromise,
+      validationFailedPromise,
+    ]).catch((error: Error) => {
+      if (error.name === 'TimeoutError') return 'timeout' as const;
+      throw error;
     });
 
-    if (page.url().includes('/login')) {
-      throw new DownloaderError('Login failed: still on login page after submit');
+    if (winner === 'form_not_found') {
+      throw new DownloaderError('Login failed: could not find the login form on the page.');
+    }
+    if (winner === 'bad_credentials') {
+      return 'bad_credentials';
+    }
+    if (winner === 'success' || winner === 'context_destroyed_by_navigation') {
+      return 'success';
     }
 
-    logger.info('Login successful');
-  } catch (error) {
-    if (error instanceof DownloaderError) throw error;
-    const msg = error instanceof Error ? error.message : String(error);
-    throw new DownloaderError(`Login failed: ${msg}`);
+    // validation_failed or timeout on individual outcome → wait briefly and retry fill
+    logger.debug(`Login attempt: ${winner}, retrying fill...`);
+    await page.waitForTimeout(100);
+  }
+
+  return 'timeout';
+}
+
+/**
+ * Performs login, prompting for new credentials if they are wrong.
+ * Navigates to the login page before each attempt to clear any error state.
+ *
+ * @throws {DownloaderError} If login fails or the user aborts.
+ */
+export async function login(
+  page: Page,
+  initialCredentials: Pick<Credentials, 'email' | 'password'>,
+  config: DownloaderConfig,
+  logger: Logger
+): Promise<void> {
+  logger.info('Logging in to TailwindPlus...');
+  let credentials = initialCredentials;
+
+  while (true) {
+    await retryGoto(page, config.urls.login, config.retries.maxRetries, logger);
+
+    const result = await resilientLogin(page, credentials, config, logger);
+
+    if (result === 'success') {
+      logger.info('Login successful');
+      return;
+    }
+
+    if (result === 'bad_credentials') {
+      logger.error('Login failed: bad credentials.');
+      if (!process.stdin.isTTY) {
+        throw new DownloaderError(
+          'Login failed: bad credentials. Cannot prompt in non-interactive mode.'
+        );
+      }
+      const answer = (await read({ prompt: 'Try again with new credentials? [Y/n]: ' })).toLowerCase();
+      if (answer === 'n' || answer === 'no') {
+        throw new DownloaderError('User aborted after failed login attempt.');
+      }
+      credentials = await promptCredentials();
+      continue;
+    }
+
+    // result === 'timeout'
+    throw new DownloaderError('Login failed: timed out waiting for login to complete.');
   }
 }
 
