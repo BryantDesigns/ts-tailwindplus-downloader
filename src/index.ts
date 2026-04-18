@@ -87,6 +87,24 @@ function parseArgs(): DownloaderOptions {
       default: false,
       describe: 'Overwrite existing output without prompting',
     })
+    .option('frameworks', {
+      type: 'array',
+      string: true,
+      describe: 'Target frameworks (e.g. react,vue,html)',
+      coerce: (arg: string[]) => arg.flatMap(a => a.split(',').map(s => s.trim()))
+    })
+    .option('versions', {
+      type: 'array',
+      describe: 'Target versions (e.g. 4,3)',
+      coerce: (arg: unknown[]) => arg.flatMap(a => String(a).split(',').map(s => parseInt(s.trim(), 10)))
+    })
+    .option('modes', {
+      type: 'array',
+      string: true,
+      describe: 'Target modes (e.g. light,dark,system)',
+      coerce: (arg: string[]) => arg.flatMap(a => a.split(',').map(s => s.trim()))
+    })
+    .config('config')
     .check(argv => {
       if (argv.workers <= 0) throw new Error('--workers must be a positive number');
       if (argv.workers > 50) throw new Error('--workers should not exceed 50');
@@ -133,6 +151,10 @@ function parseArgs(): DownloaderOptions {
     debugHeaded: argv['debugHeaded'] as boolean | undefined,
     debugTrace: argv['debugTrace'] as boolean | undefined,
     unauthenticated: argv.unauthenticated ?? false,
+    frameworks: argv.frameworks,
+    versions: argv.versions,
+    modes: argv.modes,
+    config: argv.config as string | undefined,
   };
 }
 
@@ -142,7 +164,7 @@ function parseArgs(): DownloaderOptions {
 
 async function main(): Promise<void> {
   const options = parseArgs();
-  const config = createConfig();
+  const config = createConfig(options);
   const downloader = new TailwindPlusDownloader(options, config);
   await downloader.start();
 }

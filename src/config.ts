@@ -9,7 +9,7 @@
  * alternative entry points.
  */
 
-import type { DownloaderConfig } from './types.js';
+import type { DownloaderConfig, DownloaderOptions } from './types.js';
 
 /**
  * Creates and returns the application configuration object.
@@ -17,7 +17,7 @@ import type { DownloaderConfig } from './types.js';
  * Centralises all magic strings, selectors, and constants in one place so
  * they can be updated when the TailwindPlus site structure changes.
  */
-export function createConfig(): DownloaderConfig {
+export function createConfig(options?: Partial<DownloaderOptions>): DownloaderConfig {
   const base = 'https://tailwindcss.com';
 
   // CSS selector building blocks for locating component controls on the page.
@@ -74,9 +74,9 @@ export function createConfig(): DownloaderConfig {
     },
 
     download: {
-      frameworks: ['react', 'vue', 'html'] as const,
-      versions: [3, 4] as const,
-      modes: ['system', 'light', 'dark'] as const,
+      frameworks: options?.frameworks ?? ['react', 'vue', 'html'],
+      versions: options?.versions ?? [3, 4],
+      modes: options?.modes ?? ['system', 'light', 'dark'],
     },
   };
 }

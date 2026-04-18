@@ -1,0 +1,5 @@
+{
+    "frameworks": ["react"],
+    "versions": ["4"],
+    "modes": ["light", "system"]
+}

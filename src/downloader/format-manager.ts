@@ -101,18 +101,20 @@ export async function detectCurrentFormat(
 export function generateFormats(startFormat: Format, config: DownloaderConfig): Format[] {
   const { framework: startFw, version: startV, mode: startM } = startFormat;
 
-  const frameworks = new ReflectingArray(
-    startFw,
-    ...config.download.frameworks.filter(f => f !== startFw)
-  );
-  const versions = new ReflectingArray(
-    startV,
-    ...config.download.versions.filter(v => v !== startV)
-  );
-  const modes = new ReflectingArray(
-    startM ?? config.download.modes[0]!,
-    ...config.download.modes.filter(m => m !== startM)
-  );
+  const targetFrameworks = (config.download.frameworks as readonly string[]).includes(startFw)
+    ? [startFw, ...config.download.frameworks.filter(f => f !== startFw)]
+    : [...config.download.frameworks];
+  const frameworks = new ReflectingArray(...targetFrameworks);
+
+  const targetVersions = (config.download.versions as readonly number[]).includes(startV)
+    ? [startV, ...config.download.versions.filter(v => v !== startV)]
+    : [...config.download.versions];
+  const versions = new ReflectingArray(...targetVersions);
+
+  const targetModes = startM && (config.download.modes as readonly string[]).includes(startM)
+    ? [startM, ...config.download.modes.filter(m => m !== startM)]
+    : [...config.download.modes];
+  const modes = new ReflectingArray(...targetModes);
 
   const formats: Format[] = [];
   for (const fw of frameworks) {

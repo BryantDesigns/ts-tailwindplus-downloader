@@ -61,6 +61,10 @@ export interface DownloaderOptions {
     debugHeaded?: boolean;
     debugTrace?: boolean;
     unauthenticated: boolean;
+    frameworks?: string[];
+    versions?: number[];
+    modes?: string[];
+    config?: string;
 }
 
 // =============================================================================

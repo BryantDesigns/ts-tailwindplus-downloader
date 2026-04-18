@@ -54,6 +54,12 @@ npx tsx src/index.ts --unauthenticated
 # Write as a directory tree instead of a single JSON file
 npx tsx src/index.ts --output-format=dir --output=components/
 
+# Target specific frameworks, versions, and modes
+npx tsx src/index.ts --frameworks=react --versions=4 --modes=system
+
+# Use a JSON configuration file for filters
+npx tsx src/index.ts --config=filter.json
+
 # Faster debugging: limit to 2 URLs
 npx tsx src/index.ts --debug-short-test --output=test.json --log
 ```
@@ -81,6 +87,10 @@ npx tsx src/index.ts --credentials=.ts-tailwindplus-downloader-credentials.json
 |------|---------|-------------|
 | `--output` | timestamped `.json` | Output file or directory path |
 | `--output-format` | `json` | `json` (single file) or `dir` (directory tree) |
+| `--frameworks` | (all) | Comma-separated list of frameworks to download (e.g. `react,vue,html`) |
+| `--versions` | (all) | Comma-separated list of Tailwind versions to download (e.g. `4,3`) |
+| `--modes` | (all) | Comma-separated list of color modes to download (e.g. `light,dark,system`) |
+| `--config` | — | Path to JSON config file to provide argument overrides |
 | `--workers` | `15` | Parallel browser pages (max 50) |
 | `--overwrite` | `false` | Overwrite existing output without prompting |
 | `--unauthenticated` | `false` | Download free components only (no login) |
