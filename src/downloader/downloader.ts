@@ -182,9 +182,10 @@ export class TailwindPlusDownloader {
     if (!this.options.unauthenticated) {
       await ensureAuthenticated(this.mainPage, this.context, this.config, this.logger);
 
-      // Update contextOptions with the live (authenticated) storage state so
-      // Workers inherit the session cookies when they create their own contexts.
-      this.contextOptions = { storageState: await this.context.storageState() };
+      // Pass the session file path (not an in-memory object) so each Worker
+      // context reads the file independently — avoids propagation issues with
+      // in-memory storageState objects across contexts.
+      this.contextOptions = { storageState: this.options.session };
     }
   }
 

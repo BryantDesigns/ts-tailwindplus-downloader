@@ -113,15 +113,20 @@ export async function validateSession(
   try {
     await retryGoto(page, config.urls.plus, config.retries.maxRetries, logger);
 
-    const signInLink = page.getByRole('link', { name: 'Sign in' });
-    const accountButton = page.getByRole('button', { name: 'Account' });
+    const isAuthenticated = await page.evaluate(() => {
+      const app = document.querySelector('div#app');
+      if (!app) return false;
+      try {
+        const pageData = JSON.parse(app.getAttribute('data-page') || '{}') as {
+          props?: { auth?: { user?: unknown } };
+        };
+        return !!pageData?.props?.auth?.user;
+      } catch {
+        return false;
+      }
+    });
 
-    const isSignInAbsent = !(await signInLink.isVisible());
-    const isAccountPresent = await accountButton.isVisible();
-
-    const isAuthenticated = isSignInAbsent && isAccountPresent;
     logger.debug(`Session validation: ${isAuthenticated ? 'valid' : 'invalid'}`);
-
     return isAuthenticated;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
